@@ -1,0 +1,2 @@
+class NairaIQException(Exception):
+    pass
