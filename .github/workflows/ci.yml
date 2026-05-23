@@ -1,0 +1,49 @@
+name: CI — Migrations & Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+
+jobs:
+  test:
+    name: Migrations + Tests
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUNBUFFERED: 1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Create .env from Secrets
+        run: |
+          mkdir -p nairaiq_backend
+          cat > nairaiq_backend/.env <<'EOF'
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ALGORITHM=${{ secrets.ALGORITHM }}
+          ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+          EOF
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r nairaiq_backend/requirements.txt
+
+      - name: Run Alembic migrations
+        working-directory: nairaiq_backend
+        run: |
+          alembic upgrade head
+
+      - name: Run tests
+        working-directory: nairaiq_backend
+        run: |
+          pytest -q
