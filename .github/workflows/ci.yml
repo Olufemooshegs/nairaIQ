@@ -39,11 +39,11 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Alembic migrations
-        working-directory: nairaiq_backend
+        working-directory: Alembic
         run: |
           alembic upgrade head
 
       - name: Run tests
-        working-directory: nairaiq_backend
+        working-directory: app
         run: |
           pytest -q
