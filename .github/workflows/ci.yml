@@ -39,7 +39,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Alembic migrations
-        working-directory: Alembic
+        working-directory: alembic
         run: |
           alembic upgrade head
 
