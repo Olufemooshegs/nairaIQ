@@ -80,12 +80,12 @@ def run_migrations_online():
             with context.begin_transaction():
                 context.run_migrations()
     except Exception as e:
-        # If connection fails (e.g., in CI without a real database),
-        # run in offline mode instead
+        # If connection fails, surface an explicit error instead of
+        # silently falling back to offline mode. In CI we want migrations
+        # to apply to a live DB and fail fast if they cannot.
         import sys
-        print(f"Warning: Could not connect to database: {e}", file=sys.stderr)
-        print("Running migrations in offline mode instead...", file=sys.stderr)
-        run_migrations_offline()
+        print(f"Error: Could not connect to database for migrations: {e}", file=sys.stderr)
+        raise
 
 
 
