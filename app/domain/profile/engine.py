@@ -5,6 +5,9 @@ from app.domain.knowledge.nigerian_context import NigerianContext
 from uuid import uuid4
 from app.db.repositories.onboarding_repo import OnboardingRepository
 from app.domain.profile.scoring import compute_pressure_score
+from app.domain.analytics.engine import AnalyticsEngine
+from app.domain.analytics.pipeline import AnalyticsPipeline
+from app.db.repositories.analytics_repo import AnalyticsRepository
 
 
 class ProfileEngine:
@@ -53,6 +56,17 @@ class ProfileEngine:
             "vector": vector,
             "scores": scoring,
         })
-        # persist
+        # compute analytics snapshot and persist alongside profile in same transaction
+        try:
+            engine = AnalyticsEngine()
+            pipeline = AnalyticsPipeline(engine)
+            analytics_payload = pipeline.run(user_id, profile.id, features_to_store)
+            analytics_repo = AnalyticsRepository(self.db)
+            await analytics_repo.create_snapshot(analytics_payload)
+        except Exception:
+            # best-effort; analytics persistence should not fail the profile creation
+            pass
+
+        # persist both profile and analytics
         await self.db.commit()
         return profile

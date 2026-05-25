@@ -1,402 +1,103 @@
-# NairaIQ — Codebase Snapshot (current)
+# NairaIQ — Codebase Summary (updated)
 
-Generated: 2026-05-22 — this snapshot reflects the codebase after the recent audit fixes and rewrites (requirements, Pydantic v2 settings, onboarding auth enforcement, 12-feature extractor, pressure scoring, profile versioning, repository updates, and test adjustments).
+Generated: 2026-05-25 — this snapshot records the current repository state after the recent CI fixes and code changes made to stabilize tests, settings, Alembic, and onboarding flows.
 
-This file documents the focused project tree, the key changes made, and representative code excerpts that match the code currently in the workspace.
+This document highlights:
+- The recent fixes applied to make the project CI-friendly and deterministic
+- The current functional surface of the backend (FastAPI, domain layers, DB)
+- The CI (GitHub Actions) workflow: what it does and why it runs
+- Short notes about design trade-offs and next steps (including Phase 3/4 roadmap)
 
-## Key changes applied
-- `requirements.txt`: added `pydantic-settings>=2.0` to support Pydantic v2 settings API.
-- `app/config.py`: moved `BaseSettings` import to `pydantic_settings` and load settings from `.env`.
-- `app/schemas/onboarding.py`: removed `user_id` field — user identity now comes solely from JWT via `get_current_user`.
-- `app/schemas/profile.py`: switched to Pydantic v2 output style with `model_config = ConfigDict(from_attributes=True)`.
-- `app/api/v1/onboarding.py`: endpoint requires authentication (`get_current_user`) and passes `user.id` into `ProfileEngine.process()`.
-- `app/api/v1/profile.py`: uses Pydantic v2 `model_validate()` to return profile DTOs.
-- `app/domain/features/extractor.py`: deterministic extraction with `FEATURE_NAMES` (12 entries) and `vectorize()` returns exactly 12 binary integers.
-- `app/domain/profile/scoring.py`: new `compute_pressure_score()` accumulating rule scores into `pressure_score`, `pressure_label`, `overall`, and `breakdown`.
-- `app/domain/profile/engine.py`: `process(onboarding_input, user_id)` persists onboarding with explicit `user_id`, computes features, evaluates rules, computes scoring, deactivates prior profiles, and creates a new active profile; it removes the `raw` key before persisting features to JSONB.
-- `app/db/models.py`: `OnboardingInput.user_id` made non-nullable; `FinancialProfile` gained `is_active` boolean for versioning.
-- `app/db/repositories/profile_repo.py`: added `deactivate_prior_profiles(user_id)` and `get_by_user_id()` now filters `is_active == True`.
-- `alembic/versions/0002_add_is_active_to_profiles.py`: new migration to add `is_active` with server_default true.
-- `app/tests/unit/` updates: `test_feature_vector.py` now asserts 12 binary features; `test_profile_engine.py` includes employment_status in inputs and a `test_pressure_score_output`.
-- `app/domain/features/registry.py`: documented stub with type hints for future extractor/vectorizer registration.
+## High-level summary of recent work
 
-## Focused file tree (current)
+- Normalized repository encodings and `.gitignore` entries to avoid tracked sensitive files and encoding issues.
+- Made `app` settings Pydantic-v2 compatible and tolerant of extra environment variables by using `ConfigDict(env_file=".env", extra="ignore")` and safe defaults for CI (e.g. `SECRET_KEY` fallback).
+- Ensured Alembic environment and imports work for `nairaiq_backend` by adjusting `sys.path` within `alembic/env.py` so migrations can import `app` modules.
+- Adjusted DB session logic to prefer the CI-local Postgres service when running inside GitHub Actions (`GITHUB_ACTIONS`), preventing tests from trying to reach external databases.
+- Added `email-validator` to requirements so Pydantic email fields validate during test import-time.
+- Fixed integration tests to use `httpx.AsyncClient(transport=ASGITransport(...))` rather than the removed `app=` kwarg, and set `PYTHONPATH` in CI so the tests import the `app` package correctly.
+- Resolved password hashing issues in CI by switching to `pbkdf2_sha256` (no bcrypt 72-byte limit and better CI compatibility); this is pluggable and can be swapped back to bcrypt later with a migration plan.
 
-- requirements.txt
-- .env
-- alembic/
-  - env.py
-  - versions/
-    - 0001_initial.py
-    - 0002_add_is_active_to_profiles.py
-- app/
-  - main.py
-  - config.py
-  - api/v1/
-    - auth.py
-    - onboarding.py
-    - profile.py
-  - core/
-    - security.py
-    - dependencies.py
-  - db/
-    - session.py
-    - models.py
-    - repositories/
-      - user_repo.py
-      - onboarding_repo.py
-      - profile_repo.py
-  - domain/
-    - knowledge/
-      - nigerian_context.py
-    - features/
-      - extractor.py
-      - registry.py
-    - profile/
-      - evaluator.py
-      - engine.py
-      - rules.py
-      - scoring.py
-  - schemas/
-    - onboarding.py
-    - profile.py
-  - services/
-    - auth_service.py
-  - tests/
-    - unit/
-      - test_feature_vector.py
-      - test_profile_engine.py
-    - integration/
-      - test_onboarding_flow.py
-      - test_auth_flow.py
+## CI — What it is and why it runs
+
+We run a GitHub Actions workflow on `push` and `pull_request` (branches: `main`, `master`, `develop`) to validate the repository end-to-end. CI is designed to provide deterministic, repeatable verification of schema migrations and runtime behavior before code is merged.
+
+Purpose and benefits:
+- Continuous verification of Alembic migrations against a real PostgreSQL instance so schema drift is caught early.
+- Running the full test-suite (unit + integration) in an environment very similar to production to detect regressions.
+- Enforcing deterministic behavior (no hidden dependencies on runner environment) by controlling what env vars and services the workflow uses.
+- Making the codebase safe to merge (tests must pass) and ensuring auditing reproducibility of analytics computations.
+
+What the workflow does (high level):
+1. Checkout repository (`actions/checkout@v4`).
+2. Setup Python (`actions/setup-python@v4`, Python 3.12).
+3. Install dependencies from `requirements.txt` and `nairaiq_backend/requirements.txt` (this includes `email-validator`, `httpx`, `pytest`, `asyncpg`, `psycopg[binary]`, etc.).
+4. Start a PostgreSQL service container (`postgres:15`) for the job and expose it to the runner.
+5. Export `PYTHONPATH` pointing at the `nairaiq_backend` package so tests import `app` as a package.
+6. Wait for Postgres to become ready using `pg_isready` (the workflow installs `postgresql-client` and polls the DB). This avoids flaky connection attempts.
+7. Run Alembic migrations inside `nairaiq_backend` (`alembic upgrade head`) using `DATABASE_URL=postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/test_db`.
+8. Run the test-suite from the `nairaiq_backend` working directory: `pytest -q` (this prevents duplicate test collection from top-level `app` and `nairaiq_backend/app`).
+
+Why we chose this approach:
+- Using a real Postgres container in CI exercises the same SQL dialect, JSONB behaviors and migration paths as production, making migrations auditable and deterministic.
+- Installing and running tests inside `nairaiq_backend` ensures imports are resolved consistently and prevents accidental test duplication.
+- Explicitly waiting for Postgres reduces intermittent failures.
+
+Security and environment handling in CI:
+- CI uses a controlled `DATABASE_URL` that points to the local Postgres service; we avoid relying on external DB hosts or secrets that could be absent or environment-specific.
+- The workflow avoids writing empty or undefined secrets into `.env` files — settings code was made resilient to extra or missing env vars to prevent test-collection failures caused by unexpected runner secrets.
+
+## Implementation and code fixes (concise)
+
+- `requirements.txt` and `nairaiq_backend/requirements.txt`: added `email-validator` and `httpx` so Pydantic email validators and integration tests load successfully.
+- `app/config.py` / `nairaiq_backend/app/config.py`: migrated to `ConfigDict` (`model_config = ConfigDict(env_file=".env", extra="ignore")`) and added optional fields and safe defaults for CI.
+- `app/db/session.py` (both copies): if `GITHUB_ACTIONS` == "true" the code prefers a CI-local `DATABASE_URL` (127.0.0.1) ensuring tests do not attempt to connect to unreachable external DBs.
+- `alembic/env.py` (backend): updated to adjust `sys.path` so `from app.db.models import Base` works when running alembic inside the `nairaiq_backend` working directory.
+- Tests: switched integration tests to use `ASGITransport(app=app)` to be compatible with the installed `httpx` version; set `PYTHONPATH` in CI.
+- Security: changed password hashing to `pbkdf2_sha256` in CI to avoid bcrypt's 72-byte limit and platform backend detection issues. This is a pragmatic choice for CI/test determinism; it is pluggable and can be revisited for production (bcrypt is still a recommended option when native libs are available).
+
+## Current test and CI status
+
+- The repository now runs migrations and the full test suite in CI using the Postgres service described above.
+- Key unit and integration tests were adjusted to be deterministic and to import correctly under `nairaiq_backend`'s `PYTHONPATH`.
+- The CI run validates: dependency installation, alembic migrations, and `pytest` execution — failing early on schema or logic regressions.
+
+## Next steps (Phase 3 & Phase 4 roadmap — brief)
+
+I will proceed incrementally to implement the Analytics and Insight engines as you requested. Proposed order (each is a milestone I will implement, test and commit):
+
+1. Phase 3 — Core analytics foundation
+   - Create `app/domain/analytics` modules: `models.py`, `metrics.py`, `engine.py`, `pipeline.py`, `scoring.py`.
+   - Add ORM `AnalyticsState` and `FinancialInsight` to `app/db/models.py` and create `alembic/versions/0003_*.py` migration.
+   - Implement `AnalyticsEngine` to consume `FinancialProfile`, compute `FinancialMetrics` deterministically, persist `AnalyticsState`, and provide history queries.
+   - Add `app/db/repositories/analytics_repo.py` for persistence, and thin API routes `app/api/v1/analytics.py`, `scoring.py`, `dashboard.py` plus corresponding schemas and unit tests.
+
+2. Phase 4 — Insight layer
+   - Implement `app/domain/insights` with intent classification (`intent.py`), template registry (`registry.py`), renderer abstraction (`renderer.py` and `strategies.py`), `InsightEngine` and persistence repository (`insight_repo.py`).
+   - Add thin API route `app/api/v1/insights.py` and schemas for insight responses.
+
+3. Testing and observability
+   - Unit tests for metrics, scoring and intent classification.
+   - Integration tests for the onboarding → analytics → insights flow.
+   - Add audit logs and immutable historical snapshots (JSONB) to support compliance and explainability.
+
+I will pause here. Tell me if you want me to:
+
+- (A) Update this summary further (e.g., add file links for quick navigation), or
+- (B) Start Phase 3 step 1 (create the minimal `analytics` domain files and the DB models + Alembic migration 0003), or
+- (C) Open a PR containing the CI and config fixes we already made.
+
+Files changed during CI stabilization (recent):
+- `.github/workflows/ci.yml` — added Postgres service, wait logic, `PYTHONPATH`, migrations and pytest steps.
+- `requirements.txt`, `nairaiq_backend/requirements.txt` — added `email-validator`, `httpx`.
+- `app/config.py`, `nairaiq_backend/app/config.py` — Pydantic v2 `ConfigDict` and safe defaults.
+- `app/db/session.py`, `nairaiq_backend/app/db/session.py` — CI-local DATABASE_URL fallback.
+- `app/tests/*`, `nairaiq_backend/app/tests/*` — switched to `ASGITransport` for AsyncClient.
+- `app/core/security.py`, `nairaiq_backend/app/core/security.py` — changed hashing to `pbkdf2_sha256` for CI compatibility.
 
 ---
 
-## Representative updated snippets
-
-### `requirements.txt` (now includes Pydantic settings)
-
-```text
-fastapi>=0.95
-uvicorn[standard]>=0.23
-SQLAlchemy>=2.0
-alembic>=1.11
-asyncpg>=0.27
-pydantic>=2.3
-pydantic-settings>=2.0
-python-jose>=3.3.0
-passlib[bcrypt]>=1.7.4
-bcrypt>=4.0
-pytest>=7.0
-pytest-asyncio>=0.21
-psycopg[binary]>=3.2
-python-dotenv>=1.0
-```
-
-### `app/config.py`
-
-```py
-from pydantic_settings import BaseSettings
-
-
-class Settings(BaseSettings):
-    DATABASE_URL: str
-    SECRET_KEY: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    ALGORITHM: str = "HS256"
-
-    class Config:
-        env_file = ".env"
-
-
-settings = Settings()
-```
-
-### `app/schemas/onboarding.py`
-
-```py
-from pydantic import BaseModel
-
-
-class OnboardingInput(BaseModel):
-    monthly_income: float
-    monthly_expenses: float
-    savings_balance: float = 0.0
-    income_stability: str = "low"  # low|medium|high
-    employment_status: str | None = None
-```
-
-### `app/schemas/profile.py` (Pydantic v2)
-
-```py
-from pydantic import BaseModel, ConfigDict
-from uuid import UUID
-
-
-class FinancialProfileOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
-    user_id: UUID
-    features: dict
-    vector: list
-    scores: dict
-    meta: dict | None = None
-```
-
-### `app/api/v1/onboarding.py` (auth enforced)
-
-```py
-from fastapi import APIRouter, Depends, HTTPException
-from app.core.dependencies import get_db, get_current_user
-from app.schemas.onboarding import OnboardingInput
-from app.domain.profile.engine import ProfileEngine
-
-router = APIRouter()
-
-
-@router.post("/", status_code=201)
-async def onboarding(input: OnboardingInput, db=Depends(get_db), user=Depends(get_current_user)):
-    engine = ProfileEngine(db)
-    profile = await engine.process(input, user_id=user.id)
-    if not profile:
-        raise HTTPException(status_code=500, detail="Profile generation failed")
-    return {"profile_id": str(profile.id)}
-```
-
-### `app/api/v1/profile.py` (Pydantic v2 response)
-
-```py
-from fastapi import APIRouter, Depends, HTTPException
-from app.core.dependencies import get_db, get_current_user
-from app.db.repositories.profile_repo import ProfileRepository
-from app.schemas.profile import FinancialProfileOut
-
-router = APIRouter()
-
-
-@router.get("/me", response_model=FinancialProfileOut)
-async def get_profile(db=Depends(get_db), user=Depends(get_current_user)):
-    repo = ProfileRepository(db)
-    profile = await repo.get_by_user_id(user.id)
-    if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
-    return FinancialProfileOut.model_validate(profile)
-```
-
-### `app/domain/features/extractor.py` (12 binary features)
-
-```py
-from typing import Any
-from app.domain.knowledge.nigerian_context import NigerianContext
-
-
-class FeatureExtractor:
-    FEATURE_NAMES = [
-        "has_savings",
-        "income_stable",
-        "above_min_wage",
-        "positive_cash_flow",
-        "has_employment",
-        "savings_rate_adequate",
-        "low_expense_ratio",
-        "high_income_tier",
-        "has_emergency_buffer",
-        "investment_eligible",
-        "debt_pressure_low",
-        "income_above_inflation",
-    ]
-
-    def __init__(self):
-        self.context = NigerianContext()
-
-    def extract(self, onboarding_input) -> dict:
-        data = onboarding_input.dict()
-        income = float(data.get("monthly_income", 0) or 0)
-        expenses = float(data.get("monthly_expenses", 0) or 0)
-        savings = float(data.get("savings_balance", 0) or 0)
-        income_stability = data.get("income_stability", "low")
-        employment_status = data.get("employment_status")
-
-        expense_ratio = (expenses / income) if income > 0 else 1.0
-        savings_rate = ((income - expenses) / income) if income > 0 else 0.0
-
-        features = {
-            "monthly_income": income,
-            "monthly_expenses": expenses,
-            "savings_balance": savings,
-            "income_stability": income_stability,
-            "employment_status": employment_status,
-            "expense_ratio": expense_ratio,
-            "savings_rate": savings_rate,
-            "has_savings": savings > 0,
-            "income_stable": income_stability == "high",
-            "above_min_wage": income >= self.context.MIN_WAGE,
-            "positive_cash_flow": income > expenses,
-            "has_employment": employment_status is not None and (str(employment_status).lower() != "unemployed"),
-            "savings_rate_adequate": (savings_rate >= 0.20) if income > 0 else False,
-            "low_expense_ratio": (expense_ratio <= 0.60) if income > 0 else False,
-            "high_income_tier": income >= 300_000,
-            "has_emergency_buffer": savings >= (expenses * 3),
-            "investment_eligible": False,
-            "debt_pressure_low": (expense_ratio <= 0.50) if income > 0 else False,
-            "income_above_inflation": income >= (self.context.MIN_WAGE * (1 + self.context.INFLATION_RATE)),
-            "raw": data,
-        }
-
-        features["investment_eligible"] = (
-            features["above_min_wage"] and features["positive_cash_flow"] and features["has_savings"]
-        )
-
-        return features
-
-    def vectorize(self, features: dict) -> list:
-        return [1 if features.get(k) else 0 for k in self.FEATURE_NAMES]
-```
-
-### `app/domain/profile/scoring.py` (pressure scoring)
-
-```py
-from typing import Dict
-
-
-def compute_pressure_score(rule_results: Dict[str, dict]) -> dict:
-    total_pressure = 0.0
-    breakdown: Dict[str, float] = {}
-    count = 0
-
-    for name, res in rule_results.items():
-        raw = res.get("score", 0)
-        try:
-            s = float(raw)
-        except Exception:
-            s = 0.0
-        breakdown[name] = s
-        if s > 0:
-            total_pressure += s
-        count += 1
-
-    pressure_score = int(round(total_pressure))
-
-    if pressure_score <= 2:
-        label = "low"
-    elif 3 <= pressure_score <= 4:
-        label = "medium"
-    elif 5 <= pressure_score <= 6:
-        label = "high"
-    else:
-        label = "critical"
-
-    overall = (sum(breakdown.values()) / float(count)) if count > 0 else 0.0
-
-    return {
-        "pressure_score": pressure_score,
-        "pressure_label": label,
-        "overall": round(float(overall), 4),
-        "breakdown": breakdown,
-    }
-```
-
-### `app/domain/profile/engine.py` (persist with user_id; remove `raw`)
-
-```py
-    async def process(self, onboarding_input, user_id):
-        onboarding_repo = OnboardingRepository(self.db)
-        try:
-            payload = onboarding_input.dict()
-            payload["user_id"] = user_id
-            await onboarding_repo.create(payload)
-        except Exception:
-            pass
-
-        features = self.extractor.extract(onboarding_input)
-        rules_result = self.evaluator.evaluate(features)
-        scoring = compute_pressure_score(rules_result)
-        vector = self.extractor.vectorize(features)
-
-        try:
-            await self.repo.deactivate_prior_profiles(user_id)
-        except Exception:
-            pass
-
-        features_to_store = dict(features)
-        features_to_store.pop("raw", None)
-
-        profile = await self.repo.create({
-            "id": uuid4(),
-            "user_id": user_id,
-            "features": features_to_store,
-            "vector": vector,
-            "scores": scoring,
-        })
-
-        await self.db.commit()
-        return profile
-```
-
-### `app/db/models.py` (OnboardingInput and FinancialProfile)
-
-```py
-class OnboardingInput(Base):
-    __tablename__ = "onboarding_inputs"
-    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    payload = Column(JSONB)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-
-
-class FinancialProfile(Base):
-    __tablename__ = "financial_profiles"
-    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    features = Column(JSONB, nullable=False)
-    vector = Column(JSONB, nullable=False)
-    scores = Column(JSONB, nullable=False)
-    meta = Column(JSONB)
-    is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-```
-
-### Alembic migration: `alembic/versions/0002_add_is_active_to_profiles.py`
-
-```py
-from alembic import op
-import sqlalchemy as sa
-
-def upgrade():
-    op.add_column('financial_profiles', sa.Column('is_active', sa.Boolean(), nullable=False, server_default=sa.text('true')))
-
-def downgrade():
-    op.drop_column('financial_profiles', 'is_active')
-```
-
-### `app/db/repositories/profile_repo.py` (key methods)
-
-```py
-    async def deactivate_prior_profiles(self, user_id: UUID) -> None:
-        stmt = (
-            update(FinancialProfile)
-            .where(FinancialProfile.user_id == user_id, FinancialProfile.is_active == True)
-            .values(is_active=False)
-        )
-        await self.db.execute(stmt)
-
-    async def get_by_user_id(self, user_id):
-        q = select(FinancialProfile).where(
-            FinancialProfile.user_id == user_id,
-            FinancialProfile.is_active == True,
-        )
-        res = await self.db.execute(q)
-        return res.scalars().first()
-```
-
-### Tests updated
-
-`app/tests/unit/test_feature_vector.py` now verifies the 12-element binary vector and `FEATURE_NAMES` alignment.
-
-`app/tests/unit/test_profile_engine.py` includes `employment_status` in inputs and a `test_pressure_score_output` to validate scoring output shape.
-
-### `app/domain/features/registry.py` (documented stub)
+If you'd like, I'll now create the Phase 3 skeleton files (analytics domain, repos, schemas, and migration 0003) and implement the core deterministic metrics and a few unit tests as the first incremental milestone. Which option (A/B/C) do you want me to take next?
 
 ```py
 """
