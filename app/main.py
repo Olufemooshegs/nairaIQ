@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.v1 import auth, onboarding, profile, analytics, scoring, dashboard
+from app.api.v1 import auth, onboarding, profile, analytics, scoring, dashboard, history, trends
 
 
 def create_app() -> FastAPI:
@@ -11,6 +11,8 @@ def create_app() -> FastAPI:
     app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["analytics"])
     app.include_router(scoring.router, prefix="/api/v1/scoring", tags=["scoring"])
     app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
+    app.include_router(history.router, prefix="/api/v1/history", tags=["history"])
+    app.include_router(trends.router, prefix="/api/v1/trends", tags=["trends"])
 
     return app
 

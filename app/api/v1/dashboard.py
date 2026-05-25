@@ -1,5 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.core.dependencies import get_db, get_current_user
+from app.db.repositories.dashboard_repo import DashboardRepository
+from app.domain.dashboard.builder import DashboardBuilder
+from app.domain.dashboard.timeline import TimelineEngine
+from app.schemas.dashboard import DashboardPayload
+
+router = APIRouter()
+
+
+@router.get("/{user_id}", response_model=DashboardPayload)
+async def get_dashboard(user_id: str, db=Depends(get_db)):
+    repo = DashboardRepository(db)
+    state = await repo.get_latest_for_user(user_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Dashboard data not found")
+    # build timeline with a few key metrics
+    hist = await repo.get_history_for_user(user_id, limit=12)
+    te = TimelineEngine()
+    timeline = te.build_timeline(hist, ["pressure_score", "savings_rate", "financial_stability_score"]) 
+    builder = DashboardBuilder()
+    payload = builder.build(state, timeline=timeline)
+    return DashboardPayload.model_validate(payload)
+from fastapi import APIRouter, Depends, HTTPException
+from app.core.dependencies import get_db, get_current_user
 from app.db.repositories.analytics_repo import AnalyticsRepository
 from app.domain.analytics.dashboard import DashboardBuilder
 from app.schemas.dashboard import DashboardPayload, DashboardTimelineEntry
