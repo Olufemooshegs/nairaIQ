@@ -45,7 +45,15 @@ target_metadata = Base.metadata
 
 def run_migrations_offline():
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
+    # Configure for SQL generation (offline). Some Alembic versions
+    # require `as_sql=True` when `literal_binds=True`.
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        as_sql=True,
+        dialect_opts={"paramstyle": "named"},
+    )
 
     with context.begin_transaction():
         context.run_migrations()
