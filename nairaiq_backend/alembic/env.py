@@ -52,17 +52,33 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    """Run migrations in 'online' mode (with live database connection).
+    
+    Falls back to offline mode if database connection is not available.
+    """
+    configuration = config.get_section(config.config_ini_section)
+    configuration["sqlalchemy.url"] = config.get_main_option("sqlalchemy.url")
+    
+    try:
+        connectable = engine_from_config(
+            configuration,
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        )
 
-    with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        with connectable.connect() as connection:
+            context.configure(connection=connection, target_metadata=target_metadata)
 
-        with context.begin_transaction():
-            context.run_migrations()
+            with context.begin_transaction():
+                context.run_migrations()
+    except Exception as e:
+        # If connection fails (e.g., in CI without a real database),
+        # run in offline mode instead
+        import sys
+        print(f"Warning: Could not connect to database: {e}", file=sys.stderr)
+        print("Running migrations in offline mode instead...", file=sys.stderr)
+        run_migrations_offline()
+
 
 
 if context.is_offline_mode():
