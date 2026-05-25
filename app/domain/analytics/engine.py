@@ -23,16 +23,26 @@ class AnalyticsEngine:
         savings_rate = metrics.compute_savings_rate(features)
         dti = metrics.compute_debt_to_income_ratio(features)
         emergency_gap = metrics.compute_emergency_fund_gap(features)
-        investment_score = float(features.get("investment_score", 0.0) or 0.0)
+        emergency_coverage = metrics.compute_emergency_coverage(features)
+        investment_score = metrics.compute_investment_score(features)
         estimated_expenses = float(features.get("estimated_monthly_expenses", features.get("monthly_expenses", 0.0) or 0.0))
         disposable = max(0.0, float(features.get("monthly_income", 0) or 0) - float(features.get("monthly_expenses", 0) or 0))
         rent_ratio = metrics.compute_rent_burden_ratio(features)
+        # normalize values into 0-100 'goodness' scores expected by the scorer
+        pressure_good = max(0.0, 100.0 - pressure)
+        dti_good = 0.0
+        try:
+            if dti < 999:
+                dti_good = max(0.0, 100.0 - (dti * 100.0))
+        except Exception:
+            dti_good = 0.0
+
         financial_stability = scoring.compute_overall_health({
-            "pressure_score": pressure,
+            "pressure_score": pressure_good,
             "savings_rate": savings_rate,
-            "debt_to_income_ratio": dti,
+            "debt_to_income_ratio": dti_good,
             "investment_score": investment_score,
-            "emergency_fund_gap": emergency_gap,
+            "emergency_fund_coverage": emergency_coverage,
         })
 
         fm = FinancialMetrics(

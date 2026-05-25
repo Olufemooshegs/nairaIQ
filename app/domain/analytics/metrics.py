@@ -37,6 +37,30 @@ def compute_debt_to_income_ratio(features: Dict[str, Any]) -> float:
     return round(ratio, 4)
 
 
+def compute_investment_score(features: Dict[str, Any]) -> float:
+    """Return an investment score normalized 0-100 based on investment balance
+    relative to annual income. Higher is better.
+    """
+    investment = float(features.get("investment_balance", 0) or 0)
+    income = float(features.get("monthly_income", 0) or 0) * 12.0
+    if income <= 0:
+        return 0.0
+    score = (investment / income) * 100.0
+    return round(min(100.0, score), 2)
+
+
+def compute_emergency_coverage(features: Dict[str, Any]) -> float:
+    """Return percent coverage of emergency fund target (0-100)."""
+    income = float(features.get("monthly_income", 0) or 0)
+    savings = float(features.get("savings_balance", 0) or 0)
+    target_months = DEFAULTS.get("MINIMUM_SAFE_EMERGENCY_MONTHS", 3)
+    target = income * target_months
+    if target <= 0:
+        return 0.0
+    coverage = (savings / target) * 100.0
+    return round(min(100.0, coverage), 2)
+
+
 def compute_emergency_fund_gap(features: Dict[str, Any]) -> float:
     income = float(features.get("monthly_income", 0) or 0)
     savings = float(features.get("savings_balance", 0) or 0)

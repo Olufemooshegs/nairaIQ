@@ -44,7 +44,14 @@ class DashboardBuilder:
 
     def build_timeline(self, states: list) -> list:
         timeline = []
-        for s in states:
+        for idx, s in enumerate(states, start=1):
             payload = self.build(s)
-            timeline.append({"snapshot": payload, "created_at": getattr(s, "created_at", None)})
+            entry = {
+                "snapshot_id": getattr(s, "id", None),
+                "profile_id": getattr(s, "profile_id", None),
+                "version": idx,
+                "created_at": getattr(s, "created_at", None),
+                "payload": payload,
+            }
+            timeline.append(entry)
         return timeline
