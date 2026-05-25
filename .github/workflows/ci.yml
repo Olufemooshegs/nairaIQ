@@ -67,6 +67,7 @@ jobs:
           alembic upgrade head
 
       - name: Run tests
+        working-directory: nairaiq_backend
         run: pytest -q
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
