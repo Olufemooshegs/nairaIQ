@@ -1,6 +1,6 @@
 """create analytics_states and financial_insights tables
 
-Revision ID: 0003_create_analytics_and_insights
+Revision ID: 0003_create_analytics
 Revises: 0002_add_is_active
 Create Date: 2026-05-25
 """
@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = '0003_create_analytics_and_insights'
+revision = '0003_create_analytics'
 down_revision = '0002_add_is_active'
 branch_labels = None
 depends_on = None
