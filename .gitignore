@@ -4,4 +4,10 @@ codebase_summary.md
 nairaiq_backend/.env
 nairaiq_backend/codebase_summary.md
 nairaiq_backend/*.pdf
+## Frontend
+nairaiq_frontend/node_modules/
+nairaiq_frontend/dist/
+nairaiq_frontend/.env
+nairaiq_frontend/package-lock.json
+nairaiq_frontend/.vite
 

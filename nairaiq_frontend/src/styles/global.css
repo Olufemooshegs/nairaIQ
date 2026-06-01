@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #0A2342;
+  --navyM: #0F2D54;
+  --navyL: #1B4980;
+  --teal: #00A878;
+  --tealBg: #E6FFF6;
+  --tealDk: #007A58;
+  --orange: #F26522;
+  --red: #D84040;
+  --yellow: #F5A623;
+  --white: #FFFFFF;
+  --offW: #F4F7FA;
+  --gray: #8FA3B8;
+  --grayL: #D5E1EC;
+  --grayXL: #EEF3F8;
+  --dark: #0D1E30;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Sora', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto;
+  background-color: var(--navy);
+  color: var(--white);
+}
+
+/* Animation easing and durations */
+:root {
+  --easing: cubic-bezier(0.16, 1, 0.3, 1);
+  --fast: 300ms;
+  --medium: 450ms;
+  --long: 800ms;
+}
+
+@keyframes slideUpFade {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideLeft {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes pulseRing {
+  0% { box-shadow: 0 0 0 0 rgba(0,168,120,0.24); }
+  70% { box-shadow: 0 0 0 18px rgba(0,168,120,0); }
+  100% { box-shadow: 0 0 0 0 rgba(0,168,120,0); }
+}
+
+.pulse-ring {
+  animation: pulseRing 1.6s ease-out infinite;
+}
+
+.countup {
+  transition: all var(--long) var(--easing);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 100%);
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+/* slide in helpers */
+.slide-in-right { animation: slideLeft var(--medium) var(--easing) both; }
+.slide-up { animation: slideUpFade var(--fast) var(--easing) both; }
+
+/* small utilities */
+.card { background-color: var(--navyM); border-radius: 12px; }
+
+.naira { font-variant-numeric: tabular-nums; }
