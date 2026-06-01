@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { onboardingSchema, OnboardingForm } from '../schemas/onboarding.schema'
 import * as onboardingService from '../services/onboarding.service'
 import { useNavigate } from 'react-router-dom'
 import { NIGERIAN_STATES, OCCUPATIONS, INCOME_BANDS, BANKS } from '../utils/constants'
+import { me } from '../services/auth.service'
+import { useAuthStore } from '../store/auth.store'
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1)
@@ -18,6 +20,20 @@ export default function OnboardingPage() {
   })
 
   const values = watch()
+  const auth = useAuthStore()
+
+  useEffect(() => {
+    // If authenticated, try to fetch profile to prefill onboarding (e.g., after Google sign-in)
+    async function prefill() {
+      if (!auth.token) return
+      try {
+        const profile = await me()
+        const name = profile?.full_name ?? profile?.fullName ?? profile?.name ?? ''
+        if (name && !values.fullName) setValue('fullName', name)
+      } catch (e) { /* ignore */ }
+    }
+    prefill()
+  }, [auth.token])
 
   async function submit(data: OnboardingForm) {
     setLoading(true)

@@ -14,3 +14,8 @@ export async function me() {
   const res = await api.get('/api/v1/auth/me')
   return res.data
 }
+
+export function getGoogleAuthLink() {
+  const base = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000'
+  return `${base}/api/v1/auth/google`
+}

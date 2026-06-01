@@ -76,6 +76,14 @@ body {
 .slide-in-right { animation: slideLeft var(--medium) var(--easing) both; }
 .slide-up { animation: slideUpFade var(--fast) var(--easing) both; }
 
+/* Page transition wrapper */
+.page-transition { animation: slideLeft var(--medium) var(--easing) both; }
+
+/* Google button */
+.google-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(13,30,48,0.06); background: white; color: var(--dark); font-weight: 600; cursor: pointer; transition: transform 160ms var(--easing), box-shadow 160ms var(--easing); }
+.google-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(13,30,48,0.08); }
+.google-icon { width: 18px; height: 18px; display: inline-block }
+
 /* small utilities */
 .card { background-color: var(--navyM); border-radius: 12px; }
 
