@@ -2,7 +2,6 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import Logo from '../components/shared/Logo'
 import HeroChart from '../components/shared/HeroChart'
-import HeroCarousel from '../components/shared/HeroCarousel'
 
 export default function LandingPage() {
   const navigate = useNavigate()
@@ -17,7 +16,6 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1 container mx-auto flex flex-col items-start justify-center py-16 relative z-10">
-        <HeroCarousel />
         <HeroChart />
         <h1 className="text-5xl font-extrabold leading-tight mb-4">
           <span className="flow-wrap"><span className="flow flow-delay-0">₦100k salary.</span></span>{' '}
@@ -31,24 +29,57 @@ export default function LandingPage() {
         </div>
 
         <section className="w-full grid grid-cols-3 gap-4">
-          {['Income Level','Financial Pressure','Saving Capacity','Investment Readiness','Priority','Monthly Surplus'].map((t,i) => (
-            <div key={t} className="p-4 bg-[var(--navyM)] rounded slide-up" style={{ animationDelay: `${i*60}ms` }}>
-              <div className="text-sm text-[var(--gray)]">{t}</div>
-              <div className="text-xl font-bold mt-2">—</div>
+          {[
+            { title: 'Income Level', value: 150000 },
+            { title: 'Financial Pressure', value: 4 },
+            { title: 'Saving Capacity', value: 30000 },
+            { title: 'Investment Readiness', value: 0 },
+            { title: 'Priority', value: 'Build an emergency fund' },
+            { title: 'Monthly Surplus', value: 30000 }
+          ].map((t,i) => (
+            <div key={t.title} className="p-4 bg-[var(--navyM)] rounded slide-up" style={{ animationDelay: `${i*60}ms` }}>
+              <div className="text-sm text-[var(--gray)]">{t.title}</div>
+              <div className="text-xl font-bold mt-2 naira">{typeof t.value === 'number' ? `₦${t.value.toLocaleString()}` : t.value}</div>
             </div>
           ))}
         </section>
 
-        <section className="mt-12 w-full bg-[var(--navyM)] p-6 rounded">
-          <h3 className="font-bold mb-4">How it works</h3>
-          <div className="grid grid-cols-3 gap-4 text-sm text-[var(--gray)]">
-            <div>01 Answer 8 questions</div>
-            <div>02 Get your profile</div>
-            <div>03 View your dashboard</div>
+        <section className="mt-12 w-full">
+          <h3 className="font-bold mb-6">How it works</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 bg-[var(--navyM)] rounded-lg slide-up">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(90deg, var(--teal), var(--teal-2))', color: '#02161a', fontWeight: 700 }}>01</div>
+                <div>
+                  <div className="font-semibold">Answer 8 quick questions</div>
+                  <div className="text-sm text-[var(--gray)]">Tell us about your income, expenses and goals — takes under a minute.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-[var(--navyM)] rounded-lg slide-up">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(90deg, var(--teal), var(--teal-2))', color: '#02161a', fontWeight: 700 }}>02</div>
+                <div>
+                  <div className="font-semibold">Get a deterministic profile</div>
+                  <div className="text-sm text-[var(--gray)]">We compute a clear financial snapshot and priority actions just for you.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-[var(--navyM)] rounded-lg slide-up">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(90deg, var(--teal), var(--teal-2))', color: '#02161a', fontWeight: 700 }}>03</div>
+                <div>
+                  <div className="font-semibold">Actionable dashboard</div>
+                  <div className="text-sm text-[var(--gray)]">Track your budget, savings and goals with clear next steps and visuals.</div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        <div className="mt-6 text-[var(--gray)]">🔐 No BVN · 🏦 No bank access · ⚡ 60-second profile · 🇳🇬 Built for Nigeria</div>
+        <div className="mt-8 text-[var(--muted)] text-center w-full">🇳🇬 Built for Naija</div>
       </main>
     </div>
   )
