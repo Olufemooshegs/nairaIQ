@@ -6,21 +6,26 @@ import HeroChart from '../components/shared/HeroChart'
 export default function LandingPage() {
   const navigate = useNavigate()
   return (
-    <div className="min-h-screen flex flex-col relative" style={{ backgroundColor: 'var(--navy)' }}>
+    <div className="min-h-screen flex flex-col relative">
       <header className="flex items-center justify-between p-6">
         <div className="flex items-center gap-4"><Logo /> <div className="font-bold text-lg">NairaIQ</div></div>
         <div className="flex gap-3">
-          <button onClick={() => navigate('/login')} className="text-white/80">Log in</button>
-          <button onClick={() => navigate('/register')} className="px-3 py-2 bg-[var(--teal)] text-black rounded">Get started</button>
+          <button onClick={() => navigate('/login')} className="btn-login">Log in</button>
+          <button onClick={() => navigate('/register')} className="btn-cta">Get started</button>
         </div>
       </header>
 
       <main className="flex-1 container mx-auto flex flex-col items-start justify-center py-16 relative z-10">
         <HeroChart />
-        <h1 className="text-5xl font-extrabold leading-tight mb-4">₦100k salary. Rent. Dependants. <span className="text-[var(--teal)]">What actually makes sense?</span></h1>
+        <h1 className="text-5xl font-extrabold leading-tight mb-4">
+          <span className="flow-wrap"><span className="flow flow-delay-0">₦100k salary.</span></span>{' '}
+          <span className="flow-wrap"><span className="flow flow-delay-1">Rent.</span></span>{' '}
+          <span className="flow-wrap"><span className="flow flow-delay-2">Dependants.</span></span>{' '}
+          <span className="flow-wrap"><span className="flow flow-delay-3 text-[var(--teal)]">What actually makes sense?</span></span>
+        </h1>
         <p className="text-[var(--gray)] text-lg mb-6">Answer 8 questions in under 60 seconds.</p>
         <div className="flex gap-4 mb-8">
-          <button onClick={() => navigate('/register')} className="px-5 py-3 bg-[var(--teal)] text-black rounded font-semibold">Get started</button>
+          <button onClick={() => navigate('/register')} className="btn-cta">Get started</button>
         </div>
 
         <section className="w-full grid grid-cols-3 gap-4">

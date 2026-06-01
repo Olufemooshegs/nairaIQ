@@ -3,18 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --navy: #0A2342;
-  --navyM: #0F2D54;
-  --navyL: #1B4980;
+  --navy: #061428;
+  --navyM: #072B44;
+  --navyL: #0B3B5A;
   --teal: #00A878;
-  --tealBg: #E6FFF6;
-  --tealDk: #007A58;
-  --orange: #F26522;
-  --red: #D84040;
-  --yellow: #F5A623;
+  --teal-2: #00D0B3;
+  --accent: var(--teal);
+  --bg-grad: linear-gradient(180deg, #061428 0%, #072B44 40%, #0B3B5A 100%);
+  --bg-radial-1: radial-gradient(600px 360px at 10% 20%, rgba(0,168,120,0.06), transparent 20%);
+  --bg-radial-2: radial-gradient(600px 360px at 90% 80%, rgba(0,168,200,0.04), transparent 20%);
   --white: #FFFFFF;
   --offW: #F4F7FA;
-  --gray: #8FA3B8;
+  --muted: rgba(255,255,255,0.85);
+  --gray: #9FB0C4;
   --grayL: #D5E1EC;
   --grayXL: #EEF3F8;
   --dark: #0D1E30;
@@ -26,8 +27,12 @@ html, body, #root {
 
 body {
   font-family: 'Sora', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto;
-  background-color: var(--navy);
+  background-image: var(--bg-grad), var(--bg-radial-1), var(--bg-radial-2);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Animation easing and durations */
@@ -88,6 +93,27 @@ body {
 .card { background-color: var(--navyM); border-radius: 12px; }
 
 .naira { font-variant-numeric: tabular-nums; }
+
+/* Flow-in text animation used on hero headings */
+.flow-wrap { overflow: hidden; display: inline-block; vertical-align: middle; }
+.flow { display: inline-block; transform: translateY(18px); opacity: 0; animation: flowIn 640ms var(--easing) both; animation-delay: var(--delay, 0ms); }
+.flow-delay-0 { --delay: 0ms; }
+.flow-delay-1 { --delay: 80ms; }
+.flow-delay-2 { --delay: 160ms; }
+.flow-delay-3 { --delay: 240ms; }
+.flow-delay-4 { --delay: 320ms; }
+@keyframes flowIn { 0% { transform: translateY(18px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+
+/* Header buttons */
+.btn-login { background: transparent; color: rgba(255,255,255,0.92); border: 1px solid rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 9999px; transition: transform 180ms var(--easing), background 180ms var(--easing); }
+.btn-login:hover { background: rgba(255,255,255,0.03); transform: translateY(-3px); }
+.btn-cta { background: linear-gradient(90deg, var(--teal) 0%, var(--teal-2) 100%); color: #02161a; padding: 10px 16px; border-radius: 12px; font-weight: 700; box-shadow: 0 10px 30px rgba(2,22,26,0.18); transition: transform 180ms var(--easing), box-shadow 180ms var(--easing); }
+.btn-cta:hover { transform: translateY(-4px); box-shadow: 0 18px 38px rgba(2,22,26,0.22); }
+
+/* Hero chart background tweaks */
+.hero-chart { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.18; filter: blur(0px) saturate(1.05); transform-origin: center; animation: float 8s ease-in-out infinite; }
+@keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0); } }
+
 
 /* Hero chart background */
 .hero-chart { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.12; }
