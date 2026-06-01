@@ -24,8 +24,8 @@ function CustomTooltip({ active, payload, label }: any) {
   )
 }
 
-export default function HeroChart() {
-  const data = useMemo(() => sampleData, [])
+export default function HeroChart({ demoData }: { demoData?: any }) {
+  const data = useMemo(() => demoData ?? sampleData, [demoData])
 
   return (
     <div className="hero-chart" aria-hidden>
