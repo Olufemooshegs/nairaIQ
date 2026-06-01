@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import Logo from '../components/shared/Logo'
 import HeroChart from '../components/shared/HeroChart'
+import HeroCarousel from '../components/shared/HeroCarousel'
 
 export default function LandingPage() {
   const navigate = useNavigate()
@@ -16,6 +17,7 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1 container mx-auto flex flex-col items-start justify-center py-16 relative z-10">
+        <HeroCarousel />
         <HeroChart />
         <h1 className="text-5xl font-extrabold leading-tight mb-4">
           <span className="flow-wrap"><span className="flow flow-delay-0">₦100k salary.</span></span>{' '}
