@@ -8,6 +8,7 @@ interface AuthState {
   user?: User | null
   isAuthenticated: boolean
   setToken: (token?: string | null) => void
+  setUser: (user?: User | null) => void
   login: (email: string, password: string) => Promise<void>
   logout: () => void
 }
@@ -23,6 +24,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     set({ token, isAuthenticated: !!token })
   },
+  setUser: (user) => set({ user }),
   login: async (email, password) => {
     const data = await loginRequest(email, password)
     // expected data: { access_token: string, user: { ... } }

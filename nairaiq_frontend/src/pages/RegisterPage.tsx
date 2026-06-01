@@ -7,6 +7,7 @@ import { registerRequest } from '../services/auth.service'
 import { getGoogleAuthLink } from '../services/auth.service'
 import { useLocation } from 'react-router-dom'
 import { useAuthStore } from '../store/auth.store'
+import { me } from '../services/auth.service'
 
 const schema = z.object({ email: z.string().email(), password: z.string().min(6), full_name: z.string().min(2) })
 
@@ -22,7 +23,10 @@ export default function RegisterPage() {
     const token = params.get('token') || params.get('access_token')
     if (token) {
       try { auth.setToken(token) } catch (e) {}
-      navigate('/onboarding')
+      ;(async () => {
+        try { const profile = await me(); auth.setUser(profile?.user ?? profile ?? null) } catch (e) { /* ignore */ }
+        navigate('/onboarding')
+      })()
     }
   }, [location.search, navigate, auth])
 
@@ -31,7 +35,10 @@ export default function RegisterPage() {
       setLoading(true)
       const res = await registerRequest(data)
       const token = res?.access_token ?? res?.token ?? null
-      if (token) auth.setToken(token)
+      if (token) {
+        auth.setToken(token)
+        try { const profile = await me(); auth.setUser(profile?.user ?? profile ?? null) } catch (e) { /* ignore */ }
+      }
       navigate('/onboarding')
     } catch (err) {
       alert('Registration failed')

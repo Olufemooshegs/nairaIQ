@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/auth.store'
 import { getGoogleAuthLink } from '../services/auth.service'
 import { useLocation } from 'react-router-dom'
+import { me } from '../services/auth.service'
 
 const schema = z.object({
   email: z.string().email(),
@@ -26,8 +27,14 @@ export default function LoginPage() {
     const params = new URLSearchParams(location.search)
     const token = params.get('token') || params.get('access_token')
     if (token) {
-      try { useAuthStore.getState().setToken(token) } catch (e) {}
-      navigate('/onboarding')
+      ;(async () => {
+        try {
+          useAuthStore.getState().setToken(token)
+          const profile = await me()
+          try { useAuthStore.getState().setUser(profile?.user ?? profile ?? null) } catch (e) {}
+        } catch (e) { /* ignore */ }
+        navigate('/onboarding')
+      })()
     }
   }, [location.search, navigate])
 
