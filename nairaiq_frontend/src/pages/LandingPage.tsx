@@ -1,11 +1,12 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import Logo from '../components/shared/Logo'
+import HeroChart from '../components/shared/HeroChart'
 
 export default function LandingPage() {
   const navigate = useNavigate()
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--navy)' }}>
+    <div className="min-h-screen flex flex-col relative" style={{ backgroundColor: 'var(--navy)' }}>
       <header className="flex items-center justify-between p-6">
         <div className="flex items-center gap-4"><Logo /> <div className="font-bold text-lg">NairaIQ</div></div>
         <div className="flex gap-3">
@@ -14,7 +15,8 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto flex flex-col items-start justify-center py-16">
+      <main className="flex-1 container mx-auto flex flex-col items-start justify-center py-16 relative z-10">
+        <HeroChart />
         <h1 className="text-5xl font-extrabold leading-tight mb-4">₦100k salary. Rent. Dependants. <span className="text-[var(--teal)]">What actually makes sense?</span></h1>
         <p className="text-[var(--gray)] text-lg mb-6">Answer 8 questions in under 60 seconds.</p>
         <div className="flex gap-4 mb-8">
