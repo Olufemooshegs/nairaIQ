@@ -38,13 +38,13 @@ body {
 /* Animation easing and durations */
 :root {
   --easing: cubic-bezier(0.16, 1, 0.3, 1);
-  --fast: 300ms;
-  --medium: 450ms;
-  --long: 800ms;
+  --fast: 480ms;
+  --medium: 900ms;
+  --long: 1400ms;
 }
 
 @keyframes slideUpFade {
-  from { transform: translateY(12px); opacity: 0; }
+  from { transform: translateY(18px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
@@ -60,7 +60,7 @@ body {
 }
 
 .pulse-ring {
-  animation: pulseRing 1.6s ease-out infinite;
+  animation: pulseRing 2.2s ease-out infinite;
 }
 
 .countup {
@@ -79,7 +79,7 @@ body {
 
 /* slide in helpers */
 .slide-in-right { animation: slideLeft var(--medium) var(--easing) both; }
-.slide-up { animation: slideUpFade var(--fast) var(--easing) both; }
+.slide-up { animation: slideUpFade var(--medium) var(--easing) both; }
 
 /* Page transition wrapper */
 .page-transition { animation: slideLeft var(--medium) var(--easing) both; }
@@ -96,13 +96,13 @@ body {
 
 /* Flow-in text animation used on hero headings */
 .flow-wrap { overflow: hidden; display: inline-block; vertical-align: middle; }
-.flow { display: inline-block; transform: translateY(18px); opacity: 0; animation: flowIn 640ms var(--easing) both; animation-delay: var(--delay, 0ms); }
+.flow { display: inline-block; transform: translateY(22px); opacity: 0; animation: flowIn 1000ms var(--easing) both; animation-delay: var(--delay, 0ms); }
 .flow-delay-0 { --delay: 0ms; }
-.flow-delay-1 { --delay: 80ms; }
-.flow-delay-2 { --delay: 160ms; }
-.flow-delay-3 { --delay: 240ms; }
-.flow-delay-4 { --delay: 320ms; }
-@keyframes flowIn { 0% { transform: translateY(18px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+.flow-delay-1 { --delay: 140ms; }
+.flow-delay-2 { --delay: 280ms; }
+.flow-delay-3 { --delay: 420ms; }
+.flow-delay-4 { --delay: 560ms; }
+@keyframes flowIn { 0% { transform: translateY(22px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 
 /* Header buttons */
 .btn-login { background: transparent; color: rgba(255,255,255,0.92); border: 1px solid rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 9999px; transition: transform 180ms var(--easing), background 180ms var(--easing); }
@@ -111,15 +111,28 @@ body {
 .btn-cta:hover { transform: translateY(-4px); box-shadow: 0 18px 38px rgba(2,22,26,0.22); }
 
 /* Hero chart background tweaks */
-.hero-chart { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.18; filter: blur(0px) saturate(1.05); transform-origin: center; animation: float 8s ease-in-out infinite; }
-@keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0); } }
+.hero-chart { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.14; filter: blur(0px) saturate(1.05); transform-origin: center; animation: float 12s ease-in-out infinite; }
+@keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-12px); } 100% { transform: translateY(0); } }
 
 
 /* Hero chart background */
 .hero-chart { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.12; }
 .hero-chart svg { overflow: visible; }
-.hero-line { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: drawLine 1600ms var(--easing) forwards; }
+.hero-line { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: drawLine 2200ms var(--easing) forwards; }
 @keyframes drawLine { to { stroke-dashoffset: 0; } }
+
+/* Trend arrows and badges */
+.trend { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.trend-up { color: #16a34a; }
+.trend-down { color: #ef4444; }
+.trend-flat { color: var(--gray); }
+.trend-arrow { font-size: 0.85rem; line-height: 1; }
+@keyframes trendPulse { 0% { transform: translateY(0); } 50% { transform: translateY(-3px); } 100% { transform: translateY(0); } }
+.trend-anim { animation: trendPulse 1.2s infinite; }
+
+.badge-ready { color: #16a34a; }
+.badge-developing { color: #f59e0b; }
+.badge-unknown { color: var(--gray); }
 
 /* Carousel removed — using color gradients only */
 

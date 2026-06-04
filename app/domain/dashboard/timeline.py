@@ -25,9 +25,25 @@ class TimelineEngine:
             dt = created_at
         return f"{dt.year:04d}-{dt.month:02d}"
 
+    def _extract_raw_created_at(self, item: Any):
+        if isinstance(item, dict):
+            return item.get("created_at")
+        return getattr(item, "created_at", None)
+
+    def _created_at_key(self, item: Any):
+        raw = self._extract_raw_created_at(item)
+        if isinstance(raw, datetime):
+            return raw
+        if isinstance(raw, str):
+            try:
+                return datetime.fromisoformat(raw)
+            except Exception:
+                return datetime.min
+        return datetime.min
+
     def series_for_metric(self, states: List[Any], metric_key: str) -> List[Dict[str, Any]]:
         series = []
-        for s in sorted(states, key=lambda x: getattr(x, "created_at", None) or s.get("created_at", None)):
+        for s in sorted(states, key=self._created_at_key):
             m = to_mapping(s)
             period = self._period_for(m.get("created_at"))
             val = m.get("metrics", {}).get(metric_key)

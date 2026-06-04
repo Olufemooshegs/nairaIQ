@@ -5,6 +5,7 @@ import HeroChart from '../components/shared/HeroChart'
 import { useAuthStore } from '../store/auth.store'
 import { getPublicDashboard } from '../services/landing.service'
 import { getDashboard } from '../services/dashboard.service'
+import useCyclingStats from '../hooks/useCyclingStats'
 
 export default function LandingPage() {
   const navigate = useNavigate()
@@ -34,6 +35,22 @@ export default function LandingPage() {
     })()
     return () => { mounted = false }
   }, [user?.id])
+  const { values, getPressureState, demoScenario, trends } = useCyclingStats(apiData, !user)
+
+  const metrics = apiData?.metrics ?? apiData?.summary?.high_level ?? {}
+  const scores = apiData?.scores ?? {}
+  const summary = apiData?.summary ?? {}
+  const rawPressure = demoScenario?.pressure ?? scores?.pressure_score ?? metrics?.pressure_score ?? scores?.overall_health ?? null
+  const pressureState = getPressureState(rawPressure)
+  function formatK(n?: number | null) {
+    if (n == null || Number.isNaN(Number(n))) return '—'
+    const v = Math.round(Number(n))
+    const abs = Math.abs(v)
+    if (abs >= 1000) {
+      return `₦${Math.round(v / 1000).toLocaleString()}k`
+    }
+    return `₦${v.toLocaleString()}`
+  }
   return (
     <div className="min-h-screen flex flex-col relative">
       <header className="flex items-center justify-between p-6">
@@ -45,9 +62,9 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1 container mx-auto flex flex-col items-start justify-center py-16 relative z-10">
-        <HeroChart />
+        <HeroChart demoData={apiData?.timeline ?? apiData?.timeline_entries ?? apiData} />
         <h1 className="text-5xl font-extrabold leading-tight mb-4">
-          <span className="flow-wrap"><span className="flow flow-delay-0">₦100k salary.</span></span>{' '}
+          <span className="flow-wrap"><span className="flow flow-delay-0 countup">{formatK(values.income)} salary.</span></span>{' '}
           <span className="flow-wrap"><span className="flow flow-delay-1">Rent.</span></span>{' '}
           <span className="flow-wrap"><span className="flow flow-delay-2">Dependants.</span></span>{' '}
           <span className="flow-wrap"><span className="flow flow-delay-3 text-[var(--teal)]">What actually makes sense?</span></span>
@@ -59,56 +76,74 @@ export default function LandingPage() {
 
         <section className="w-full grid grid-cols-3 gap-4">
           {([
-            { title: 'Income Level', key: 'income' },
+            { title: 'Income', key: 'income' },
             { title: 'Financial Pressure', key: 'pressure' },
             { title: 'Saving Capacity', key: 'saving' },
             { title: 'Investment Readiness', key: 'investment' },
             { title: 'Priority', key: 'priority' },
             { title: 'Monthly Surplus', key: 'surplus' }
           ] as any[]).map((t,i) => {
-            // derive values from apiData when available
-            const raw = apiData ?? null
-            let value: any = '—'
-            if (raw) {
-              const metrics = raw.metrics ?? raw.summary?.high_level ?? {}
-              const scores = raw.scores ?? {}
-              const summary = raw.summary ?? {}
-              switch (t.key) {
-                case 'income':
-                  value = raw.income ?? metrics.monthly_income ?? metrics.disposable_income ?? null
-                  break
-                case 'pressure':
-                  value = scores.pressure_score ?? metrics.pressure_score ?? scores.overall_health ?? null
-                  break
-                case 'saving':
-                  value = metrics.savings_rate ?? (raw.surplus ?? null) ?? null
-                  break
-                case 'investment':
-                  value = raw.profile?.investment_readiness ?? metrics.investment_readiness ?? null
-                  break
-                case 'priority':
-                  value = summary.priority_action ?? raw.strategic_priority ?? (raw.summary?.headline ?? null)
-                  break
-                case 'surplus':
-                  if (metrics.disposable_income != null && metrics.estimated_monthly_expenses != null) {
-                    value = metrics.disposable_income - metrics.estimated_monthly_expenses
-                  } else {
-                    value = raw.surplus ?? null
-                  }
-                  break
-                default:
-                  value = '—'
-              }
-            } else {
-              // default demo values
-              const demo = { income: 150000, pressure: 4, saving: 30000, investment: 'developing', priority: 'Build an emergency fund', surplus: 30000 }
-              value = demo[t.key]
+            let content: any = '—'
+            let colorStyle: any = { color: 'var(--white)' }
+
+            if (t.key === 'income') {
+              const v = values.income
+              const display = formatK(v)
+              if (v >= 100000) colorStyle.color = '#16a34a'
+              else if (v >= 50000) colorStyle.color = '#f59e0b'
+              else colorStyle.color = '#ef4444'
+              content = <>{display}</>
             }
-            const display = typeof value === 'number' ? `₦${value.toLocaleString()}` : value ?? '—'
+
+            if (t.key === 'pressure') {
+              const display = pressureState.label
+              const bgMap: any = { green: 'rgba(34,197,94,0.12)', amber: 'rgba(245,158,11,0.12)', red: 'rgba(239,68,68,0.12)' }
+              const txtMap: any = { green: '#16a34a', amber: '#f59e0b', red: '#ef4444' }
+              colorStyle = { background: bgMap[pressureState.color] || 'transparent', color: txtMap[pressureState.color] || 'var(--muted)', padding: '6px 10px', borderRadius: 999 }
+              content = <span>{display}</span>
+            }
+
+            if (t.key === 'saving') {
+              const v = values.saving
+              const display = formatK(v)
+              const tVal = trends?.saving ?? 0
+              const arrow = tVal > 0 ? '▲' : tVal < 0 ? '▼' : '—'
+              const trendClass = tVal > 0 ? 'trend-up trend-anim' : tVal < 0 ? 'trend-down trend-anim' : 'trend-flat'
+              if (v >= 20000) colorStyle.color = '#16a34a'
+              else if (v >= 5000) colorStyle.color = '#f59e0b'
+              else colorStyle.color = '#ef4444'
+              content = (<><span>{display}</span> <span className={`trend-arrow ${trendClass}`} aria-hidden>{arrow}</span></>)
+            }
+
+            if (t.key === 'investment') {
+              const raw = demoScenario?.investment ?? apiData?.profile?.investment_readiness ?? metrics?.investment_readiness ?? 'Developing'
+              const badgeClass = String(raw).toLowerCase().includes('ready') ? 'badge-ready' : String(raw).toLowerCase().includes('develop') ? 'badge-developing' : 'badge-unknown'
+              content = <span className={badgeClass}>{raw}</span>
+            }
+
+            if (t.key === 'priority') {
+              const raw = demoScenario?.priority ?? summary?.priority_action ?? apiData?.strategic_priority ?? summary?.headline ?? 'Build an emergency fund'
+              let pColor = '#f59e0b'
+              const s = String(raw).toLowerCase()
+              if (s.includes('invest')) pColor = '#16a34a'
+              else if (s.includes('reduce') || s.includes('cut')) pColor = '#ef4444'
+              content = <span style={{ color: pColor }}>{raw}</span>
+            }
+
+            if (t.key === 'surplus') {
+              const v = values.surplus
+              const display = formatK(v)
+              const tVal = trends?.surplus ?? 0
+              const arrow = tVal > 0 ? '▲' : tVal < 0 ? '▼' : '—'
+              const trendClass = tVal > 0 ? 'trend-up trend-anim' : tVal < 0 ? 'trend-down trend-anim' : 'trend-flat'
+              colorStyle.color = v > 0 ? '#16a34a' : '#ef4444'
+              content = (<><span>{display}</span> <span className={`trend-arrow ${trendClass}`} aria-hidden>{arrow}</span></>)
+            }
+
             return (
-              <div key={t.title} className="p-4 bg-[var(--navyM)] rounded slide-up" style={{ animationDelay: `${i*60}ms` }}>
+              <div key={t.title} className="p-4 bg-[var(--navyM)] rounded slide-up" style={{ animationDelay: `${i*140}ms` }}>
                 <div className="text-sm text-[var(--gray)]">{t.title}</div>
-                <div className="text-xl font-bold mt-2 naira">{display}</div>
+                <div className="text-xl font-bold mt-2 naira countup" style={colorStyle}>{content}</div>
               </div>
             )
           })}
