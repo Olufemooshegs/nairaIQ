@@ -50,7 +50,7 @@ class ProfileEngine:
             features_to_store.pop("raw")
 
         profile = await self.repo.create({
-            "id": uuid4(),
+            "id": str(uuid4()),
             "user_id": user_id,
             "features": features_to_store,
             "vector": vector,

@@ -61,7 +61,7 @@ function buildChartFromTimeline(timeline: any) {
 export default function HeroChart({ demoData }: { demoData?: any }) {
   const data = useMemo(() => buildChartFromTimeline(demoData), [demoData])
   const keys = data && data.length ? Object.keys(data[0]).filter((k) => k !== 'name') : ['income', 'expenses']
-  const palette = ['#00A878', '#F5A623', '#60A5FA', '#A78BFA']
+  const palette = ['var(--teal)', 'var(--chart-yellow)', 'var(--chart-blue)', 'var(--chart-purple)']
 
   return (
     <div className="hero-chart" aria-hidden>
@@ -69,14 +69,14 @@ export default function HeroChart({ demoData }: { demoData?: any }) {
         <AreaChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#00A878" stopOpacity="0.42" />
-              <stop offset="60%" stopColor="#00A878" stopOpacity="0.10" />
-              <stop offset="100%" stopColor="#00A878" stopOpacity="0.02" />
+              <stop offset="0%" stopColor="var(--teal)" stopOpacity="0.42" />
+              <stop offset="60%" stopColor="var(--teal)" stopOpacity="0.10" />
+              <stop offset="100%" stopColor="var(--teal)" stopOpacity="0.02" />
             </linearGradient>
             <linearGradient id="expGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F5A623" stopOpacity="0.18" />
-              <stop offset="60%" stopColor="#F5A623" stopOpacity="0.06" />
-              <stop offset="100%" stopColor="#F5A623" stopOpacity="0.02" />
+              <stop offset="0%" stopColor="var(--chart-yellow)" stopOpacity="0.18" />
+              <stop offset="60%" stopColor="var(--chart-yellow)" stopOpacity="0.06" />
+              <stop offset="100%" stopColor="var(--chart-yellow)" stopOpacity="0.02" />
             </linearGradient>
           </defs>
           <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.03)" />

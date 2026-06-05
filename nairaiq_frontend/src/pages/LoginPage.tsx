@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, startTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -33,7 +33,7 @@ export default function LoginPage() {
           const profile = await me()
           try { useAuthStore.getState().setUser(profile?.user ?? profile ?? null) } catch (e) {}
         } catch (e) { /* ignore */ }
-        navigate('/onboarding')
+        startTransition(() => navigate('/onboarding'))
       })()
     }
   }, [location.search, navigate])
@@ -42,7 +42,7 @@ export default function LoginPage() {
     try {
       setLoading(true)
       await login(data.email, data.password)
-      navigate('/dashboard')
+      startTransition(() => navigate('/dashboard'))
     } catch (err) {
       console.error(err)
       alert('Login failed')
@@ -95,7 +95,7 @@ export default function LoginPage() {
             </button>
 
             <div className="mt-2 text-sm">
-              <a href="/register" className="text-[var(--navyL)]">Create an account</a>
+              <a href="/register" onClick={(e) => { e.preventDefault(); startTransition(() => navigate('/register')) }} className="text-[var(--navyL)]">Create an account</a>
             </div>
           </div>
         </div>

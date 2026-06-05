@@ -1,7 +1,9 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/auth.store'
 
-const baseURL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000'
+// In dev use a relative base so Vite's proxy (vite.config.ts) forwards `/api` to the backend
+const envBase = (import.meta.env.VITE_API_URL as string) || ''
+const baseURL = import.meta.env.DEV ? '' : (envBase || 'http://localhost:8000')
 
 const api = axios.create({
   baseURL,

@@ -3,21 +3,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        navy: '#0A2342',
-        navyM: '#0F2D54',
-        navyL: '#1B4980',
-        teal: '#00A878',
-        tealBg: '#E6FFF6',
-        tealDk: '#007A58',
+        navy: '#03363D',
+        navyM: '#054F52',
+        navyL: '#0B6E6E',
+        teal: '#BBD9D7',
+        tealBg: '#EAF7F6',
+        tealDk: '#9FCAC7',
         orange: '#F26522',
         red: '#D84040',
         yellow: '#F5A623',
         white: '#FFFFFF',
         offW: '#F4F7FA',
-        gray: '#8FA3B8',
-        grayL: '#D5E1EC',
-        grayXL: '#EEF3F8',
-        dark: '#0D1E30'
+        gray: '#B1C4C6',
+        grayL: '#DDEBEA',
+        grayXL: '#EEF7F6',
+        dark: '#021617'
       },
       fontFamily: {
         sans: ['Sora', 'ui-sans-serif', 'system-ui']

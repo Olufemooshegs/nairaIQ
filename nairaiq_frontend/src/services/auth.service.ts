@@ -1,7 +1,7 @@
 import api from './api'
 
 export async function loginRequest(email: string, password: string) {
-  const res = await api.post('/api/v1/auth/login', { username: email, password })
+  const res = await api.post('/api/v1/auth/login', { email, password })
   return res.data
 }
 
@@ -18,4 +18,14 @@ export async function me() {
 export function getGoogleAuthLink() {
   const base = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000'
   return `${base}/api/v1/auth/google`
+}
+
+export async function sendOtp(email: string) {
+  const res = await api.post('/api/v1/auth/send_otp', { email })
+  return res.data
+}
+
+export async function verifyOtp(email: string, code: string) {
+  const res = await api.post('/api/v1/auth/verify_otp', { email, code })
+  return res.data
 }

@@ -17,10 +17,10 @@ export default function HistoryPage() {
           <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
               <LineChart data={data}>
-                <XAxis dataKey="computed_at" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
+                <XAxis dataKey="computed_at" stroke={'var(--muted-stroke)'} />
+                <YAxis stroke={'var(--muted-stroke)'} />
                 <Tooltip />
-                <Line dataKey="pressure_score" stroke="#ffb703" dot={false} />
+                <Line dataKey="pressure_score" stroke={'var(--pressure-yellow)'} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

@@ -25,3 +25,8 @@ async def get_trends(user_id: str, db=Depends(get_db)):
                 direction = "worsening"
         trends[k] = {"direction": direction, "series": s}
     return trends
+
+
+@router.get("/me")
+async def get_trends_me(db=Depends(get_db), user=Depends(get_current_user)):
+    return await get_trends(str(user.id), db=db)

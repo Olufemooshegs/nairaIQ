@@ -20,3 +20,15 @@ async def get_analytics_history(user_id: str, db=Depends(get_db), start: Optiona
     repo = HistoryRepository(db)
     analytics = await repo.get_analytics_for_user(user_id, start=start, end=end, limit=limit, offset=offset)
     return [AnalyticsHistoryOut.model_validate(a) for a in analytics]
+
+    @router.get("/profile/me", response_model=list[ProfileHistoryOut])
+    async def get_profile_history_me(db=Depends(get_db), user=Depends(get_current_user)):
+        repo = HistoryRepository(db)
+        profiles = await repo.get_profiles_for_user(user.id)
+        return [ProfileHistoryOut.model_validate(p) for p in profiles]
+
+    @router.get("/analytics/me", response_model=list[AnalyticsHistoryOut])
+    async def get_analytics_history_me(db=Depends(get_db), user=Depends(get_current_user)):
+        repo = HistoryRepository(db)
+        analytics = await repo.get_analytics_for_user(user.id)
+        return [AnalyticsHistoryOut.model_validate(a) for a in analytics]

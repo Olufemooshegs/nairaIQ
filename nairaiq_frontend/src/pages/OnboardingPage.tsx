@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, startTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { onboardingSchema, OnboardingForm } from '../schemas/onboarding.schema'
@@ -14,7 +14,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
 
-  const { register, handleSubmit, watch, setValue, formState } = useForm<OnboardingForm>({
+  const { register, handleSubmit, watch, setValue, formState, trigger, getValues } = useForm<OnboardingForm>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: { fullName: '', age_range: '25-34', state: NIGERIAN_STATES[0], occupation: OCCUPATIONS[0], income_range: INCOME_BANDS[0], pays_rent: false, has_dependants: false, primary_bank: BANKS[0] }
   })
@@ -29,28 +29,79 @@ export default function OnboardingPage() {
       try {
         const profile = await me()
         const name = profile?.full_name ?? profile?.fullName ?? profile?.name ?? ''
-        if (name && !values.fullName) setValue('fullName', name)
+        if (name && !getValues('fullName')) setValue('fullName', name)
       } catch (e) { /* ignore */ }
     }
     prefill()
   }, [auth.token])
 
+  // Also prefill from auth store (e.g., provisional name set after register+OTP)
+  useEffect(() => {
+    const name = (auth.user as any)?.full_name ?? (auth.user as any)?.fullName ?? (auth.user as any)?.name ?? ''
+    if (name && !getValues('fullName')) setValue('fullName', name)
+  }, [auth.user])
+
   async function submit(data: OnboardingForm) {
     setLoading(true)
     setError(null)
     try {
-      await onboardingService.submitOnboarding(data)
-      navigate('/generating')
+      // Map frontend form (income bands etc.) to backend onboarding payload
+      function parseIncomeBand(band: string) {
+        switch (band) {
+          case '0-50k': return 25000
+          case '50k-100k': return 75000
+          case '100k-200k': return 150000
+          case '200k-400k': return 300000
+          case '400k-800k': return 600000
+          case '800k+': return 1000000
+          default: return 50000
+        }
+      }
+
+      const monthly_income = parseIncomeBand(data.income_range)
+      const monthly_expenses = Math.round(monthly_income * (data.pays_rent ? 0.75 : 0.6))
+
+      const payload = {
+        monthly_income,
+        monthly_expenses,
+        savings_balance: 0.0,
+        income_stability: 'medium',
+        employment_status: data.occupation,
+        // keep raw frontend values for debugging / storage
+        fullName: data.fullName,
+        age_range: data.age_range,
+        state: data.state,
+        occupation: data.occupation,
+        income_range: data.income_range,
+        pays_rent: data.pays_rent,
+        has_dependants: data.has_dependants,
+        primary_bank: data.primary_bank,
+      }
+
+      await onboardingService.submitOnboarding(payload)
+      startTransition(() => navigate('/generating'))
     } catch (err: any) {
-      setError(err?.message ?? 'Submission failed')
+      console.error('Onboarding submit error', err)
+      // Axios network error: no response
+      if (err?.request && !err?.response) {
+        setError('Network error: could not reach the backend. Is the server running at http://localhost:8000 and CORS configured?')
+      } else if (err?.response) {
+        // Backend returned an error response
+        const d = err.response.data
+        const msg = d?.detail ?? d?.message ?? JSON.stringify(d)
+        setError(msg || 'Submission failed')
+      } else {
+        setError(err?.message ?? 'Submission failed')
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-8">
-      <div className="w-full max-w-xl bg-[var(--navyM)] p-6 rounded shadow-lg">
+    <div className="min-h-screen flex flex-col relative">
+      <main className="flex-1 container mx-auto flex items-center justify-center py-16 relative z-10">
+        <div className="w-full max-w-xl bg-white/5 border border-white/5 p-6 rounded shadow-lg">
         <div className="mb-4">
           <div className="h-2 bg-[var(--grayXL)] rounded overflow-hidden">
             <div style={{ width: `${(step / 4) * 100}%`, transition: 'width 400ms var(--easing)' }} className="h-2 bg-[var(--teal)]"></div>
@@ -67,6 +118,7 @@ export default function OnboardingPage() {
               <div>
                 <label className="block text-sm">Full name</label>
                 <input className="w-full mt-1 p-2 rounded bg-[var(--navyL)]" {...register('fullName')} />
+                {formState.errors.fullName && <div className="text-red-400 text-sm mt-1">{String(formState.errors.fullName.message)}</div>}
               </div>
               <div>
                 <label className="block text-sm">Age range</label>
@@ -77,8 +129,16 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div className="flex justify-between">
-                <button type="button" onClick={() => navigate('/register')} className="px-4 py-2 rounded bg-[var(--gray)]">Cancel</button>
-                <button type="button" onClick={() => setStep(2)} className="px-4 py-2 rounded bg-[var(--teal)] text-black">Continue</button>
+                <button type="button" onClick={() => startTransition(() => navigate('/'))} className="px-4 py-2 rounded bg-[var(--gray)]">Cancel</button>
+                <button type="button" onClick={async () => {
+                  setError(null)
+                  const ok = await trigger('fullName')
+                  if (!ok) {
+                    setError('Please enter your full name to continue')
+                    return
+                  }
+                  setStep(2)
+                }} className="btn-cta">Continue</button>
               </div>
             </div>
           )}
@@ -101,7 +161,7 @@ export default function OnboardingPage() {
               </div>
               <div className="flex justify-between">
                 <button type="button" onClick={() => setStep(1)} className="px-4 py-2 rounded bg-[var(--gray)]">Back</button>
-                <button type="button" onClick={() => setStep(3)} className="px-4 py-2 rounded bg-[var(--teal)] text-black">Continue</button>
+                <button type="button" onClick={() => setStep(3)} className="btn-cta">Continue</button>
               </div>
             </div>
           )}
@@ -118,7 +178,7 @@ export default function OnboardingPage() {
               </div>
               <div className="flex justify-between">
                 <button type="button" onClick={() => setStep(2)} className="px-4 py-2 rounded bg-[var(--gray)]">Back</button>
-                <button type="button" onClick={() => setStep(4)} className="px-4 py-2 rounded bg-[var(--teal)] text-black">Continue</button>
+                <button type="button" onClick={() => setStep(4)} className="btn-cta">Continue</button>
               </div>
             </div>
           )}
@@ -148,7 +208,7 @@ export default function OnboardingPage() {
 
               <div className="flex justify-between">
                 <button type="button" onClick={() => setStep(3)} className="px-4 py-2 rounded bg-[var(--gray)]">Back</button>
-                <button type="submit" disabled={loading} className="px-4 py-2 rounded bg-[var(--teal)] text-black">Build my profile →</button>
+                <button type="submit" disabled={loading} className="btn-cta">Build my profile →</button>
               </div>
             </div>
           )}
@@ -158,6 +218,7 @@ export default function OnboardingPage() {
         {loading && <div className="mt-4 text-sm">Submitting...</div>}
         {error && <div className="mt-4 text-sm text-red-400">{error}</div>}
       </div>
+      </main>
     </div>
   )
 }

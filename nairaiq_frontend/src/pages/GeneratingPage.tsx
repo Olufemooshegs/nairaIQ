@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, startTransition } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const steps = [
@@ -20,7 +20,7 @@ export default function GeneratingPage() {
       const t = setTimeout(() => setI(i+1), 380)
       return () => clearTimeout(t)
     }
-    const finish = setTimeout(() => navigate('/dashboard'), 600)
+    const finish = setTimeout(() => startTransition(() => navigate('/dashboard')), 600)
     return () => clearTimeout(finish)
   }, [i, navigate])
 

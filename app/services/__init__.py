@@ -1,1 +1,1 @@
-from .auth_service import register_user, authenticate_user, create_access_token_for_user
+from .auth_service import register_user, authenticate_user, create_access_token_for_user, get_or_create_user_by_email

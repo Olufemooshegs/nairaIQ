@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, startTransition } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Logo from '../components/shared/Logo'
 import HeroChart from '../components/shared/HeroChart'
@@ -56,8 +56,8 @@ export default function LandingPage() {
       <header className="flex items-center justify-between p-6">
         <div className="flex items-center gap-4"><Logo /> <div className="font-bold text-lg">NairaIQ</div></div>
         <div className="flex gap-3">
-          <button onClick={() => navigate('/login')} className="btn-login">Log in</button>
-          <button onClick={() => navigate('/register')} className="btn-cta">Get started</button>
+          <button onClick={() => startTransition(() => navigate('/login'))} className="btn-login">Log in</button>
+          <button onClick={() => startTransition(() => navigate('/register'))} className="btn-cta">Get started</button>
         </div>
       </header>
 
@@ -71,7 +71,13 @@ export default function LandingPage() {
         </h1>
         <p className="text-[var(--gray)] text-lg mb-6">Answer 8 questions in under 60 seconds.</p>
         <div className="flex gap-4 mb-8">
-          <button onClick={() => navigate('/register')} className="btn-cta">Get started</button>
+          <div className="p-6 rounded-lg bg-white/5 border border-white/5">
+            <div className="text-lg font-semibold">Get started</div>
+            <div className="text-[var(--gray)] text-sm">Create your profile in under 60 seconds.</div>
+            <div className="mt-4">
+              <button onClick={() => startTransition(() => navigate('/register'))} className="btn-cta">Get started</button>
+            </div>
+          </div>
         </div>
 
         <section className="w-full grid grid-cols-3 gap-4">
@@ -89,16 +95,16 @@ export default function LandingPage() {
             if (t.key === 'income') {
               const v = values.income
               const display = formatK(v)
-              if (v >= 100000) colorStyle.color = '#16a34a'
-              else if (v >= 50000) colorStyle.color = '#f59e0b'
-              else colorStyle.color = '#ef4444'
+              if (v >= 100000) colorStyle.color = 'var(--success)'
+              else if (v >= 50000) colorStyle.color = 'var(--warning)'
+              else colorStyle.color = 'var(--danger)'
               content = <>{display}</>
             }
 
             if (t.key === 'pressure') {
               const display = pressureState.label
               const bgMap: any = { green: 'rgba(34,197,94,0.12)', amber: 'rgba(245,158,11,0.12)', red: 'rgba(239,68,68,0.12)' }
-              const txtMap: any = { green: '#16a34a', amber: '#f59e0b', red: '#ef4444' }
+              const txtMap: any = { green: 'var(--success)', amber: 'var(--warning)', red: 'var(--danger)' }
               colorStyle = { background: bgMap[pressureState.color] || 'transparent', color: txtMap[pressureState.color] || 'var(--muted)', padding: '6px 10px', borderRadius: 999 }
               content = <span>{display}</span>
             }
@@ -109,9 +115,9 @@ export default function LandingPage() {
               const tVal = trends?.saving ?? 0
               const arrow = tVal > 0 ? '▲' : tVal < 0 ? '▼' : '—'
               const trendClass = tVal > 0 ? 'trend-up trend-anim' : tVal < 0 ? 'trend-down trend-anim' : 'trend-flat'
-              if (v >= 20000) colorStyle.color = '#16a34a'
-              else if (v >= 5000) colorStyle.color = '#f59e0b'
-              else colorStyle.color = '#ef4444'
+              if (v >= 20000) colorStyle.color = 'var(--success)'
+              else if (v >= 5000) colorStyle.color = 'var(--warning)'
+              else colorStyle.color = 'var(--danger)'
               content = (<><span>{display}</span> <span className={`trend-arrow ${trendClass}`} aria-hidden>{arrow}</span></>)
             }
 
@@ -123,10 +129,10 @@ export default function LandingPage() {
 
             if (t.key === 'priority') {
               const raw = demoScenario?.priority ?? summary?.priority_action ?? apiData?.strategic_priority ?? summary?.headline ?? 'Build an emergency fund'
-              let pColor = '#f59e0b'
+              let pColor = 'var(--warning)'
               const s = String(raw).toLowerCase()
-              if (s.includes('invest')) pColor = '#16a34a'
-              else if (s.includes('reduce') || s.includes('cut')) pColor = '#ef4444'
+              if (s.includes('invest')) pColor = 'var(--success)'
+              else if (s.includes('reduce') || s.includes('cut')) pColor = 'var(--danger)'
               content = <span style={{ color: pColor }}>{raw}</span>
             }
 
@@ -136,7 +142,7 @@ export default function LandingPage() {
               const tVal = trends?.surplus ?? 0
               const arrow = tVal > 0 ? '▲' : tVal < 0 ? '▼' : '—'
               const trendClass = tVal > 0 ? 'trend-up trend-anim' : tVal < 0 ? 'trend-down trend-anim' : 'trend-flat'
-              colorStyle.color = v > 0 ? '#16a34a' : '#ef4444'
+              colorStyle.color = v > 0 ? 'var(--success)' : 'var(--danger)'
               content = (<><span>{display}</span> <span className={`trend-arrow ${trendClass}`} aria-hidden>{arrow}</span></>)
             }
 
@@ -154,7 +160,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-6 bg-[var(--navyM)] rounded-lg slide-up">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(90deg, var(--teal), var(--teal-2))', color: '#02161a', fontWeight: 700 }}>01</div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(90deg, var(--teal), var(--teal-2))', color: 'var(--dark)', fontWeight: 700 }}>01</div>
                 <div>
                   <div className="font-semibold">Answer 8 quick questions</div>
                   <div className="text-sm text-[var(--gray)]">Tell us about your income, expenses and goals — takes under a minute.</div>
@@ -164,7 +170,7 @@ export default function LandingPage() {
 
             <div className="p-6 bg-[var(--navyM)] rounded-lg slide-up">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(90deg, var(--teal), var(--teal-2))', color: '#02161a', fontWeight: 700 }}>02</div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(90deg, var(--teal), var(--teal-2))', color: 'var(--dark)', fontWeight: 700 }}>02</div>
                 <div>
                   <div className="font-semibold">Get a deterministic profile</div>
                   <div className="text-sm text-[var(--gray)]">We compute a clear financial snapshot and priority actions just for you.</div>
@@ -174,7 +180,7 @@ export default function LandingPage() {
 
             <div className="p-6 bg-[var(--navyM)] rounded-lg slide-up">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(90deg, var(--teal), var(--teal-2))', color: '#02161a', fontWeight: 700 }}>03</div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(90deg, var(--teal), var(--teal-2))', color: 'var(--dark)', fontWeight: 700 }}>03</div>
                 <div>
                   <div className="font-semibold">Actionable dashboard</div>
                   <div className="text-sm text-[var(--gray)]">Track your budget, savings and goals with clear next steps and visuals.</div>
