@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from .models import FinancialMetrics
 from . import metrics, scoring
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 
 class AnalyticsEngine:
@@ -60,14 +60,19 @@ class AnalyticsEngine:
 
         return fm
 
-    def create_analytics_state(self, user_id: UUID, profile_id: UUID, features: Dict[str, Any]) -> Dict[str, Any]:
-        metrics_obj = self.compute_metrics(features)
-        state = {
-            "id": uuid4(),
-            "user_id": user_id,
-            "profile_id": profile_id,
-            "metrics": metrics_obj.as_dict(),
-            "scores": {"overall_health": metrics_obj.overall_health_score},
-            "meta": {"deterministic": True},
-        }
-        return state
+    def create_analytics_state(self, user_id: str, profile_id: str, features: Dict[str, Any]) -> Dict[str, Any]:
+            metrics_obj = self.compute_metrics(features)
+            metrics_map = metrics_obj.as_dict()
+            # include optional category-level breakdown if present in features
+            if isinstance(features.get("expense_breakdown"), dict):
+                metrics_map["expense_breakdown"] = features.get("expense_breakdown")
+
+            state = {
+                "id": str(uuid4()),
+                "user_id": user_id,
+                "profile_id": profile_id,
+                "metrics": metrics_map,
+                "scores": {"overall_health": metrics_obj.overall_health_score},
+                "meta": {"deterministic": True},
+            }
+            return state

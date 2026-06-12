@@ -16,27 +16,28 @@ from app.db.models import EmailVerification
 router = APIRouter()
 
 # Standard register/login endpoints
-@router.post("/register", response_model=Token)
+@router.post("/register")
 async def register(user_in: UserCreate, db=Depends(get_db)):
     # check existing email to return a helpful error message
     repo = UserRepository(db)
     existing = await repo.get_by_email(user_in.email)
     if existing:
         raise HTTPException(status_code=400, detail="Email already exists")
+    # create user and return token + user info
     user = await register_user(db, user_in)
     if not user:
         raise HTTPException(status_code=400, detail="Registration failed")
     token = await create_access_token_for_user(user)
-    return token
+    return {"access_token": token["access_token"], "user": {"id": str(user.id), "email": user.email, "first_name": user.first_name, "last_name": user.last_name, "phone_number": user.phone_number}}
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login")
 async def login(form_data: UserCreate, db=Depends(get_db)):
     user = await authenticate_user(db, form_data.email, form_data.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = await create_access_token_for_user(user)
-    return token
+    return {"access_token": token["access_token"], "user": {"id": str(user.id), "email": user.email, "first_name": getattr(user, "first_name", None), "last_name": getattr(user, "last_name", None), "phone_number": getattr(user, "phone_number", None)}}
 
 
 # Google OAuth endpoints
@@ -93,18 +94,21 @@ async def google_auth_callback(code: str | None = None, db=Depends(get_db)):
         userinfo_resp.raise_for_status()
         userinfo = userinfo_resp.json()
         email = userinfo.get("email")
+        # attempt to extract name parts
+        first_name = userinfo.get("given_name") or None
+        last_name = userinfo.get("family_name") or None
 
     if not email:
         raise HTTPException(status_code=400, detail="Could not fetch user email from Google")
 
-    user = await get_or_create_user_by_email(db, email)
+    user = await get_or_create_user_by_email(db, email, first_name=first_name, last_name=last_name)
     token = await create_access_token_for_user(user)
     return RedirectResponse(f"{FRONTEND_URL}/register?token={token['access_token']}")
 
 
 @router.get("/me")
 async def get_current_user_info(user=Depends(get_current_user)):
-    return {"id": str(user.id), "email": user.email}
+    return {"id": str(user.id), "email": user.email, "first_name": getattr(user, "first_name", None), "last_name": getattr(user, "last_name", None), "phone_number": getattr(user, "phone_number", None)}
 
 
 @router.post("/send_otp")

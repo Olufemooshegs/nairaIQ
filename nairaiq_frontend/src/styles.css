@@ -1,0 +1,135 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-mint: var(--mint);
+  --color-mint-glow: var(--mint-glow);
+  --color-teal-deep: var(--teal-deep);
+  --color-teal-overlay: var(--teal-overlay);
+  --color-teal-dark: var(--teal-dark);
+  --color-text-muted: var(--text-muted);
+  --color-text-body: var(--text-body);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  --font-display: "Sora", system-ui, sans-serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --shadow-glow: 0 0 32px rgba(141, 217, 215, 0.25);
+  --shadow-card: 0 8px 32px rgba(2, 31, 35, 0.4);
+}
+
+:root {
+  --radius: 1rem;
+
+  /* NairaIQ palette */
+  --teal-deep: #03363d;
+  --teal-overlay: #0a4d55;
+  --teal-dark: #021f23;
+  --mint: #8dd9d7;
+  --mint-glow: rgba(141, 217, 215, 0.2);
+  --text-muted: #a8d5d3;
+  --text-body: #e0f4f3;
+  --success: #4ecdc4;
+  --warning: #ffb347;
+  --danger: #ff6b6b;
+
+  /* Shadcn token mapping (dark only) */
+  --background: var(--teal-dark);
+  --foreground: #ffffff;
+  --card: var(--teal-deep);
+  --card-foreground: var(--text-body);
+  --popover: var(--teal-overlay);
+  --popover-foreground: var(--text-body);
+  --primary: var(--mint);
+  --primary-foreground: var(--teal-dark);
+  --secondary: var(--teal-overlay);
+  --secondary-foreground: #ffffff;
+  --muted: var(--teal-overlay);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--mint);
+  --accent-foreground: var(--teal-dark);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --border: rgba(141, 217, 215, 0.15);
+  --input: rgba(141, 217, 215, 0.2);
+  --ring: var(--mint);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html, body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: -0.02em; }
+}
+
+@utility glass-card {
+  background: rgba(3, 54, 61, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(141, 217, 215, 0.15);
+  border-radius: 16px;
+}
+
+@utility mint-glow {
+  box-shadow: 0 0 32px rgba(141, 217, 215, 0.25);
+}
+
+@utility text-gradient-mint {
+  background: linear-gradient(135deg, #8dd9d7 0%, #4ecdc4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility bg-hero-gradient {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(141, 217, 215, 0.15), transparent),
+    radial-gradient(ellipse 60% 50% at 80% 100%, rgba(78, 205, 196, 0.1), transparent),
+    linear-gradient(180deg, #021f23 0%, #03363d 100%);
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes mint-pulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(141, 217, 215, 0.2); }
+  50% { box-shadow: 0 0 48px rgba(141, 217, 215, 0.45); }
+}
+.animate-fade-up { animation: fade-up 0.6s ease-out both; }
+.animate-mint-pulse { animation: mint-pulse 3s ease-in-out infinite; }

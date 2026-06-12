@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 import os
 
 from app.api.v1 import auth, onboarding, profile, analytics, scoring, dashboard, history, trends
@@ -62,3 +64,11 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+# Serve built frontend (if present) so the backend can be deployed standalone.
+try:
+    client_dist = Path(__file__).resolve().parent.parent / "nairaiq_frontend" / "dist" / "client"
+    if client_dist.exists():
+        app.mount("/", StaticFiles(directory=str(client_dist), html=True), name="frontend")
+except Exception:
+    pass

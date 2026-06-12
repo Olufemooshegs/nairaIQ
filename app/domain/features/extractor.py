@@ -1,3 +1,4 @@
+import re
 from typing import Any
 from app.domain.knowledge.nigerian_context import NigerianContext
 
@@ -24,8 +25,48 @@ class FeatureExtractor:
 
     def extract(self, onboarding_input) -> dict:
         data = onboarding_input.dict()
+        def _parse_number(s):
+            if s is None:
+                return 0.0
+            st = str(s)
+            if "-" in st:
+                parts = [p for p in st.split("-")]
+                nums = []
+                for p in parts:
+                    try:
+                        nums.append(float(''.join([c for c in p if c.isdigit()] or [0])))
+                    except Exception:
+                        nums.append(0.0)
+                if len(nums) >= 2 and nums[1] > 0:
+                    return (nums[0] + nums[1]) / 2.0
+                return nums[0] or nums[1] or 0.0
+            if re.search(r"and above", st, re.I):
+                n = ''.join([c for c in st if c.isdigit()]) or "0"
+                try:
+                    return float(n)
+                except Exception:
+                    return 0.0
+            n = ''.join([c for c in st if c.isdigit()]) or "0"
+            try:
+                return float(n)
+            except Exception:
+                return 0.0
+
         income = float(data.get("monthly_income", 0) or 0)
-        expenses = float(data.get("monthly_expenses", 0) or 0)
+        base_expenses = float(data.get("monthly_expenses", 0) or 0)
+        # if category-level estimates exist, derive a more accurate expenses estimate
+        cat_map = data.get("monthly_expenses_by_category")
+        cat_sum = 0.0
+        expense_breakdown = None
+        if isinstance(cat_map, dict):
+            expense_breakdown = {}
+            for k, v in cat_map.items():
+                try:
+                    expense_breakdown[k] = _parse_number(v)
+                except Exception:
+                    expense_breakdown[k] = 0.0
+            cat_sum = sum(expense_breakdown.values())
+        expenses = cat_sum if cat_sum > 0 else base_expenses
         savings = float(data.get("savings_balance", 0) or 0)
         income_stability = data.get("income_stability", "low")
         employment_status = data.get("employment_status")
@@ -36,6 +77,8 @@ class FeatureExtractor:
         features = {
             "monthly_income": income,
             "monthly_expenses": expenses,
+            "estimated_monthly_expenses": float(cat_sum or expenses),
+            "expense_breakdown": expense_breakdown,
             "savings_balance": savings,
             "income_stability": income_stability,
             "employment_status": employment_status,

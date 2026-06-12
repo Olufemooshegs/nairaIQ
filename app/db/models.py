@@ -11,6 +11,10 @@ class User(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     email = Column(String(255), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
+    first_name = Column(String(120), nullable=True)
+    last_name = Column(String(120), nullable=True)
+    avatar_url = Column(String(512), nullable=True)
+    phone_number = Column(String(32), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 

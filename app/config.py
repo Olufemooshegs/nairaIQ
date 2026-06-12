@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str | None = None
     SUPABASE_ANON_KEY: str | None = None
     SUPABASE_SERVICE_ROLE_KEY: str | None = None
+    SUPABASE_AVATAR_BUCKET: str = "avatars"
 
 
 settings = Settings()
