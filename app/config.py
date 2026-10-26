@@ -7,8 +7,8 @@ class Settings(BaseSettings):
     model_config = ConfigDict(env_file=".env", extra="ignore")
 
     DATABASE_URL: str
-    # Provide a safe default for tests/CI; production should set a real secret via env
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "test-secret")
+    # Required: set SECRET_KEY via environment or .env. No default, so a missing key fails at startup.
+    SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     ALGORITHM: str = "HS256"
 
