@@ -11,3 +11,19 @@ nairaiq_frontend/.env
 nairaiq_frontend/package-lock.json
 nairaiq_frontend/.vite
 
+
+## Secrets / local env (examples stay tracked)
+.env
+.env.*
+!.env.example
+!.env.render.example
+!.env.vercel.example
+
+## Python bytecode
+__pycache__/
+*.pyc
+
+## Local SQLite databases
+*.db
+*.sqlite
+*.sqlite3
