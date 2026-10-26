@@ -65,7 +65,7 @@ jobs:
           alembic upgrade head
 
       - name: Run tests
-        run: pytest -q
+        run: pytest -q app/tests
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
           # CI-only throwaway value for the test run. Not a secret; never used in production.
